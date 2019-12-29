@@ -2,42 +2,31 @@
 #include "Networkbits.hpp"
 #include "string.h"
 
-// This is a very short demo that demonstrates all the hardware used in the coursework.
-// You will need a network connection set up (covered elsewhere). The host PC should have the address 10.0.0.1
-
-
 #define HTTP_STATUS_LINE "HTTP/1.0 200 OK"
 #define HTTP_HEADER_FIELDS "Content-Type: text/html; charset=utf-8"
 #define HTTP_TITLE "" \
 "<!DOCTYPE html>" \
 "<html>" \
 "<head><title> Group S Environmental Sensor </title></head>" "\r\n"
-
 #define BODY1 ""   \
 "   <body style=\"display:flex;text-align:center\">" "\r\n"     \
 "       <div style=\"margin:auto\">" "\r\n"                     \
 "           <p>Date/Time: "
-
 #define BODY2 "</p>" "\r\n"                        \
 "           <h3>Sensor Data</h3>" "\r\n"                        \
 "           <p>Temperature: "
-
 #define BODY3 "deg C</p>" "\r\n"                   \
 "           <p>Pressure: "
-
 #define BODY4 "mbar</p>" "\r\n"                       \
 "           <p>Light Level: "
-
 #define BODY5 "</p>" "\r\n"                        \
 "       </div>" "\r\n"                                          \
 "   </body>" "\r\n"                                             \
 "</html>" "\r\n"
-
 #define RESPONSE HTTP_STATUS_LINE "\r\n"   \
-                      HTTP_HEADER_FIELDS "\r\n" \
-                      "\r\n"                    \
-                      HTTP_TITLE "\r\n"
-
+                 HTTP_HEADER_FIELDS "\r\n" \
+                 "\r\n"                    \
+                 HTTP_TITLE "\r\n"
 #define IP        "10.0.0.10"
 #define NET   "255.255.255.0"
 #define GATEWAY   "10.0.0.1"
@@ -57,8 +46,28 @@ public:
     }
 };
 
+const std::string WHITESPACE = " \n\r\t\f\v";
+
+std::string ltrim(const std::string& s)
+{
+	size_t start = s.find_first_not_of(WHITESPACE);
+	return (start == std::string::npos) ? "" : s.substr(start);
+}
+
+std::string rtrim(const std::string& s)
+{
+	size_t end = s.find_last_not_of(WHITESPACE);
+	return (end == std::string::npos) ? "" : s.substr(0, end + 1);
+}
+
+std::string trim(const std::string& s)
+{
+	return rtrim(ltrim(s));
+}
+
+
 Serial pc(USBTX, USBRX);
-Thread network;
+Thread network, serial;
 TCPSocket srv;
 Mutex data_lock;
 Data data(time(NULL), 100.0, 25.6, 376.3);
@@ -66,11 +75,9 @@ Data data(time(NULL), 100.0, 25.6, 376.3);
 void server() {
     TCPSocket *clt_sock;
     while (true) {
-        pc.puts("Hey");
         clt_sock=srv.accept();
-        pc.puts("Hey");
+			
         data_lock.lock();
-        pc.puts("Hey");
         string response = RESPONSE;
 				response += BODY1;
 				response += ctime(&data.datetime);
@@ -83,13 +90,59 @@ void server() {
 				response += BODY5;
 				response += "\r\n";
         data_lock.unlock();
-        pc.puts("Hey");
-			clt_sock->send(response.c_str(), response.size());
 			
-        pc.puts("Hey");
+				clt_sock->send(response.c_str(), response.size());
 
         clt_sock->close();
         ThisThread::sleep_for(1000);
+    }
+}
+
+void s_comm() {
+    while(true) {
+        char c;
+        char size = 20, count = 0;
+        char cmd0[size];
+        do {
+						//bug where if you backspace, it doesnt delete the character
+						//backspace counts as a character
+						while (!pc.readable()){}
+            c = pc.getc();
+            cmd0[count] = toupper(c);
+            count++;
+        } while (c != '\n' && c != '\r' && count < 19);
+				cmd0[count] = '\0';
+        string cmd(cmd0);
+        cmd = trim(cmd);
+
+        if (cmd == "READ NOW") {
+            data_lock.lock();
+            pc.printf("%s %6.2f %6.2f %6.2f\r\n", ctime(&data.datetime),
+                        data.temperature, data.pressure, data.light);
+            data_lock.unlock();
+        } else if (cmd == "READ BUFFER") {
+            pc.printf("%s\r\n", cmd.c_str());
+        } else if (cmd.substr(0,4) == "SET ") {
+            double val = atof(cmd.substr(4).c_str());
+            if (val >= 0.1 && val <= 30.0) {
+                pc.printf("T UPDATED TO %4.1f\n",val);
+            }
+            else {pc.puts("Out of Range Error");}
+        } else if (cmd.substr(0,6) == "STATE ") {
+            if (cmd.substr(6) == "ON") {pc.puts("Sampling on");}
+            else if (cmd.substr(6) == "OFF") {pc.puts("Sampling off");}
+            else {pc.puts("Input error");}
+        } else if (cmd.substr(0,8) == "LOGGING ") {
+            if (cmd.substr(8) == "ON") {pc.puts("Logging on");}
+            else if (cmd.substr(8) == "OFF") {pc.puts("Logging off");}
+            else {pc.puts("Input error");}
+        } else if (cmd == "FLUSH") {
+            pc.printf("%s\r\n", cmd.c_str());
+        } else if (cmd == "EJECT") {
+            pc.printf("%s\r\n", cmd.c_str());
+        } else {
+            pc.puts("Invalid command");
+        }
     }
 }
 
@@ -108,17 +161,16 @@ int main()
         err=srv.listen(5);
         if(err==0) {
             network.start(server);
-					//server();
         } else {
             pc.printf("Listen error=%d\n\r",err);
         }
     } else {
         pc.printf("Bind error=%d\n\r",err);
     }
-    pc.puts("Heyyiiiiop");
+		serial.start(s_comm);
 	while(true){
-	
-        };
+		ThisThread::sleep_for(2000);
+  };
     
 }
 
