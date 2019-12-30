@@ -1,6 +1,7 @@
 #include "sample_hardware.hpp"
 #include "Networkbits.hpp"
 #include "string.h"
+#include <ctime>
 
 #define HTTP_STATUS_LINE "HTTP/1.0 200 OK"
 #define HTTP_HEADER_FIELDS "Content-Type: text/html; charset=utf-8"
@@ -30,6 +31,18 @@
 #define IP        "10.0.0.10"
 #define NET   "255.255.255.0"
 #define GATEWAY   "10.0.0.1"
+#define P_LENGTH 7
+const int P[] = { 0,3,6,16,19,22,25 };
+
+struct {
+			short month = 0;
+			short day = 1;
+			short year = 0;
+			short hour = 0;
+			short minute = 0;
+			short second = 0;
+			string text = "OK";
+		} lcd_time;
 
 class Data {
 public:
@@ -65,6 +78,93 @@ std::string trim(const std::string& s)
 	return rtrim(ltrim(s));
 }
 
+
+void press(DigitalIn& button) {
+	while(button==0){}
+	ThisThread::sleep_for(200);
+	while(button==1){}
+	ThisThread::sleep_for(200);
+}
+
+void press2(DigitalIn& button) {
+	ThisThread::sleep_for(200);
+	while(button==1){}
+	ThisThread::sleep_for(200);
+}
+
+void time_to_lcd(struct tm* tim) {
+	lcd_time.month = tim->tm_mon+1;
+	lcd_time.day = tim->tm_mday;
+	lcd_time.year = tim->tm_year+1900;
+	lcd_time.hour = tim->tm_hour;
+	lcd_time.minute = tim->tm_min;
+	lcd_time.second = tim->tm_sec;
+}
+
+void lcd_to_time(struct tm* tim) {
+	tim->tm_mon = lcd_time.month-1;
+	tim->tm_mday = lcd_time.day;
+	tim->tm_year = lcd_time.year-1900;
+	tim->tm_hour = lcd_time.hour;
+	tim->tm_min = lcd_time.minute;
+	tim->tm_sec = lcd_time.second;
+}
+
+void locate(short col, short row) {
+	short cmd = 0x80;
+	row /= 16;
+	if (row == 1) {cmd += 0x40;}
+	col %= 16;
+	cmd += col;
+	lcd.writeCommand(cmd);
+	lcd.locate(col, row);
+}
+short time_change(char detail, bool direction) {
+	char max = 31;
+	switch (detail) {
+		case 0: //MONTH
+			if (direction) {lcd_time.month += lcd_time.month == 12 ? -11 : 1;}
+			else {lcd_time.month -= lcd_time.month == 1 ? -11 : 1;}
+			if (lcd_time.month == 2) {lcd_time.day = lcd_time.day > 28 ? 28 : lcd_time.day;}
+			else if (lcd_time.month == 4 || lcd_time.month == 6 
+							|| lcd_time.month == 9 || lcd_time.month == 11) {lcd_time.day = lcd_time.day > 30 ? 30 : lcd_time.day;}
+			locate(P[1],P[1]);
+			lcd.printf("%02d", lcd_time.day);
+			return lcd_time.month;
+			break;
+		case 1: //DAY
+			if (lcd_time.month == 2) {max = 28;}
+			else if (lcd_time.month == 4 || lcd_time.month == 6 
+							|| lcd_time.month == 9 || lcd_time.month == 11) {max = 30;}
+			if (direction) {lcd_time.day += lcd_time.day == max ? 1-max : 1;}
+			else {lcd_time.day -= lcd_time.day == 1 ? 1-max : 1;}
+			return lcd_time.day;
+			break;
+		case 2: //YEAR
+			if (direction) {lcd_time.year++;}
+			else {lcd_time.year -= lcd_time.year == 1900 ? 1900 : 1;}
+			return lcd_time.year;
+			break;
+		case 3: //HOUR
+			if (direction) {lcd_time.hour += lcd_time.hour == 23 ? -23 : 1;}
+			else {lcd_time.hour -= lcd_time.hour == 0 ? -23 : 1;}
+			return lcd_time.hour;
+			break;
+		case 4: //MINUTE
+			if (direction) {lcd_time.minute += lcd_time.minute == 59 ? -59 : 1;}
+			else {lcd_time.minute -= lcd_time.minute == 0 ? -59 : 1;}
+			return lcd_time.minute;
+			break;
+		case 5: //SECOND
+			if (direction) {lcd_time.second += lcd_time.second == 59 ? -59 : 1;}
+			else {lcd_time.second -= lcd_time.second == 0 ? -59 : 1;}
+			return lcd_time.second;
+			break;
+	}
+	
+	return -1;
+}
+const char* TEXT[] = {"MONTH", "DAY", "YEAR", "HOUR", "MINUTE", "SECOND", "OK"};
 
 Serial pc(USBTX, USBRX);
 Thread network, serial;
@@ -149,7 +249,7 @@ void s_comm() {
 int main()
 {
 		pc.baud(9600);
-    EthernetInterface eth;
+    /*EthernetInterface eth;
     eth.set_network(IP, NET, GATEWAY);
     eth.connect();
     pc.printf("IP address is '%s'\r\n", eth.get_ip_address());
@@ -167,10 +267,104 @@ int main()
     } else {
         pc.printf("Bind error=%d\n\r",err);
     }
-		serial.start(s_comm);
-	while(true){
-		ThisThread::sleep_for(2000);
-  };
+		serial.start(s_comm);*/
+		lcd.cls();
+		lcd.writeCommand(0x0D);
+		locate(0,0);
+		time_t timm;
+		time_t old = time(NULL);
+		struct tm *tim = localtime(&old);
+		tim->tm_hour=15;
+		tim->tm_mday=7;
+		tim->tm_year=120;
+		set_time(mktime(tim));
+		DigitalIn& blue = onBoardSwitch;
+	
+		while(true){
+			//ThisThread::sleep_for(2000);
+			lcd.printf("Hey");
+			press(blue);
+			lcd.cls();
+			timm = time(NULL);
+			tim = localtime(&timm);
+			time_to_lcd(tim);
+			lcd.printf("%02d %02d %04d\n"\
+			"%02d:%02d:%02d %7.7s", lcd_time.month,
+			lcd_time.day, lcd_time.year, lcd_time.hour,
+			lcd_time.minute, lcd_time.second, lcd_time.text.c_str());
+			char pointer = 0;
+			char location = P[pointer];
+			locate(location,0);
+			while (true) {
+				if (SW1 == 1) {
+					press2(SW1);
+					pointer = pointer >= 6 ? 0 : pointer + 1;
+					location = P[pointer];
+					locate(location,location);
+				}
+				
+				if (SW2 == 1) {
+					press2(SW2);
+					pointer = pointer <= 0 ? 6 : pointer - 1;
+					location = P[pointer];
+					locate(location,location);
+				}
+					
+				if (blue == 1) {
+					press2(blue);
+					char detail = 0;
+					
+					if (location == P[6]) {
+						lcd_to_time(tim);
+						set_time(mktime(tim));
+						pc.printf("%s", asctime(tim));
+						
+						lcd.cls();
+						lcd.printf("Time Set!");
+						ThisThread::sleep_for(1000);
+						lcd.cls();
+						break;
+					}
+					
+					if (location == P[0]) { detail = 0; }
+					else if (location == P[1]) { detail = 1; }
+					else if (location == P[2]) { detail = 2; }
+					else if (location == P[3]) { detail = 3; }
+					else if (location == P[4]) { detail = 4; }
+					else if (location == P[5]) { detail = 5; }
+					else {lcd.cls(); lcd.printf("Error"); break;}
+						locate(P[6],P[6]);
+						lcd.printf("%7.7s", TEXT[detail]);
+						locate((location)+1,location);
+						
+						while (true) {
+							if (SW1 == 1 || SW2 == 1) {
+								bool direction;
+								if (SW1 == 1) { direction = true; press2(SW1); }
+								else { direction = false; press2(SW2); }
+								short result = time_change(detail,direction);
+								if (result < 0) {lcd.cls(); lcd.printf("Error"); break;}
+								pc.printf("%d %d %d %d\n", detail, P[detail], location, result);
+								//location = P[(location+1) % P_LENGTH];
+								locate(P[detail],P[detail]);
+								if (detail == 2) {lcd.printf("%04d", result);}
+								else {lcd.printf("%02d", result);}
+								locate(location+1,location);
+							}
+							
+							if (blue == 1) {
+								press2(SW2);
+								locate(P[6],P[6]);
+								lcd.printf("%7.7s", TEXT[6]);
+								locate(location,location);
+								break;
+							}
+						}
+						
+					}
+				
+			}
+		};
     
 }
 
