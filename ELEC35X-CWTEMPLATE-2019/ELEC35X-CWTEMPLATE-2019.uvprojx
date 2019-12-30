@@ -432,6 +432,36 @@
               <FileType>5</FileType>
               <FilePath>ELEC350-Hardware/sample_hardware.hpp</FilePath>
             </File>
+            <File>
+              <FileName>extras.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\extras.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>extras.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\extras.h</FilePath>
+            </File>
+            <File>
+              <FileName>network.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\network.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>network.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\network.h</FilePath>
+            </File>
+            <File>
+              <FileName>serial.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\serial.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>serial.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\serial.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -446,6 +476,16 @@
               <FileName>mbed_config.h</FileName>
               <FileType>5</FileType>
               <FilePath>mbed_config.h</FilePath>
+            </File>
+            <File>
+              <FileName>switch.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\switch.h</FilePath>
+            </File>
+            <File>
+              <FileName>switch.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\switch.cpp</FilePath>
             </File>
           </Files>
         </Group>
