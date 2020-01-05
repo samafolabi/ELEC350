@@ -5,17 +5,19 @@
 
 #include "sample_hardware.hpp"
 #include "Networkbits.hpp"
+#include <ctime>
 #include "string.h"
 #include "mbed.h"
 
 class Data {
 public:
     time_t datetime;
-    float temperature;
-    float pressure;
-    float light;
+    double temperature;
+    double pressure;
+    double light;
 
-    Data(time_t d, float t, float p, float l);
+    Data(time_t d, double t, double p, double l);
+		void print(bool lcd_print = false);
 };
 
 extern Serial pc;

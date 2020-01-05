@@ -432,6 +432,11 @@
               <FileType>5</FileType>
               <FilePath>ELEC350-Hardware/sample_hardware.hpp</FilePath>
             </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>ELEC35X-CWTEMPLATE-2019</GroupName>
+          <Files>
             <File>
               <FileName>extras.cpp</FileName>
               <FileType>8</FileType>
@@ -462,11 +467,6 @@
               <FileType>5</FileType>
               <FilePath>.\serial.h</FilePath>
             </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>ELEC35X-CWTEMPLATE-2019</GroupName>
-          <Files>
             <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
@@ -486,6 +486,16 @@
               <FileName>switch.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\switch.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>sensor.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\sensor.h</FilePath>
+            </File>
+            <File>
+              <FileName>sensor.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\sensor.cpp</FilePath>
             </File>
           </Files>
         </Group>

@@ -355,4 +355,4 @@
   C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\__bsd_locale_fallbacks.h \
   C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\bitset \
   C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\__bit_reference extras.h \
-  switch.h serial.h network.h
+  switch.h serial.h sensor.h network.h

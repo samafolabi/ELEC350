@@ -6,6 +6,7 @@
 #include "switch.h"
 #include "serial.h"
 #include "network.h"
+#include "sensor.h"
 
 int main()
 {
@@ -13,8 +14,12 @@ int main()
 		network_setup();
 		lcd_date_setup();
 	
+		sampling_setup();
+	
 		while(true){
-			lcd_date();
+			//lcd_date();
+			//pc.printf("Hi");
+			//ThisThread::sleep_for(5000);
 		};
     
 }

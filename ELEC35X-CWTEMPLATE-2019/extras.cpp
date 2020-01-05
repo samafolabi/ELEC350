@@ -3,11 +3,26 @@
 #include "extras.h"
 #include "mbed.h"
 
-Data::Data(time_t d, float t, float p, float l) {
+Data::Data(time_t d, double t, double p, double l) {
 		datetime = d;
 		temperature = t;
 		pressure = p;
 		light = l;
+}
+
+void Data::print(bool lcd_print) {
+		if (lcd_print) {
+				lcd.cls();
+				lcd.printf("T:%5.1f", this->temperature);
+				lcd.locate(0,1);
+				lcd.printf("P:%5.1f", this->pressure);
+				lcd.printf("L:%4.3f", this->light);
+		}
+		pc.printf("Temperature: %5.1f\n", this->temperature);
+		pc.printf("Pressure: %5.1f\n", this->pressure);
+		pc.printf("LDR: %f\n", this->light);
+		
+		pc.printf("Time: %s\n", ctime(&this->datetime));
 }
 
 Thread net_thread, serial_thread;

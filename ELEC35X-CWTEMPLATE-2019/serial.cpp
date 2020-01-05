@@ -38,6 +38,7 @@ void serial_comm() {
         } else if (cmd.substr(0,4) == "SET ") {
             double val = atof(cmd.substr(4).c_str());
             if (val >= 0.1 && val <= 30.0) {
+								sampling(val);
                 pc.printf("T UPDATED TO %4.1f\n",val);
             }
             else {pc.puts("Out of Range Error");}

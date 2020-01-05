@@ -5,6 +5,7 @@
 
 #include "extras.h"
 #include "mbed.h"
+#include "sensor.h"
 
 
 extern void serial_comm();

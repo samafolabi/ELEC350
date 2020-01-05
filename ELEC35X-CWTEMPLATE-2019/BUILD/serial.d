@@ -354,4 +354,4 @@
   C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\locale \
   C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\__bsd_locale_fallbacks.h \
   C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\bitset \
-  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\__bit_reference
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\__bit_reference sensor.h
